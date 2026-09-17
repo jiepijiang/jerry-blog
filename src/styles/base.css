@@ -1,0 +1,126 @@
+/* =========================================================================
+   全局基础样式（对应原站 style.css 的 reset / body / 字体部分）
+   ========================================================================= */
+
+@font-face {
+  font-display: swap;
+  font-family: b;
+  src: url(/static/fonts/Ubuntu-Regular.ttf);
+}
+
+@font-face {
+  font-display: swap;
+  font-family: title;
+  src: url(/static/fonts/Pacifico-Regular.ttf);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+a:active,
+a:focus,
+a:hover,
+a:link,
+a:visited {
+  border: none;
+  color: inherit;
+  outline: none;
+  text-decoration: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar {
+  width: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--main_text_color, #000);
+  border-radius: 8px;
+  height: 20%;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--main_bg_color, linear-gradient(50deg, #a2d0ff, #fff));
+}
+
+body {
+  background: var(--main_bg_color);
+  background-attachment: fixed;
+  background-position: 50%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: var(--main_text_color);
+  font-family: b, sans-serif;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  transition: color 0.1s ease;
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backgroundSizeAnimation {
+  0% {
+    background-position: 100%;
+  }
+  25% {
+    background-position: 50%;
+  }
+  50% {
+    background-position: 0;
+  }
+  75% {
+    background-position: 50%;
+  }
+  to {
+    background-position: 100%;
+  }
+}
+
+/* 打字机光标 */
+.typing {
+  display: inline-block;
+  overflow: hidden;
+  position: relative;
+  vertical-align: bottom;
+}
+
+.typing::after {
+  animation: typing-caret 1s steps(1) infinite;
+  background: currentColor;
+  content: '';
+  display: inline-block;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.1em;
+  width: 1ch;
+}
+
+@keyframes typing-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  to {
+    opacity: 0;
+  }
+}
+
+.typing-mask {
+  white-space: nowrap;
+}

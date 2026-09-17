@@ -1,0 +1,249 @@
+/* =========================================================================
+   加载动画（原站 loader.css + style.css 中 #Miyako-loading-container 的合并结果）
+   注意：原站 style.css 用 id 选择器覆盖了 loader.css 的 background/transition，
+   所以这里直接落地「最终生效值」，保证视觉一致。
+   ========================================================================= */
+
+.loader-container {
+  align-items: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  /* 最终生效值来自 style.css 的 #Miyako-loading-container */
+  background: linear-gradient(135deg, #f7f7f7, #e0e0e0);
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  top: 0;
+  transition: opacity 1s ease-in-out;
+  width: 100vw;
+  z-index: 2147483647;
+}
+
+/* 说明：原站 loader.css 里的 [data-theme=Light] .loader-container 被
+   style.css 的 #Miyako-loading-container（id 优先级更高）覆盖，
+   所以首页的容器背景恒为上面的浅灰渐变，与主题无关。
+   留言板（chat.html）用的是另一套内联样式，背景跟随主题，见下方规则。 */
+
+.loader-container.chat-variant {
+  background: linear-gradient(135deg, rgba(13, 20, 41, 0.95), rgba(9, 14, 30, 0.9));
+}
+
+[data-theme='Light'] .loader-container.chat-variant {
+  background: linear-gradient(135deg, rgba(240, 243, 250, 0.95), rgba(232, 236, 246, 0.9));
+}
+
+.starry-wrapper {
+  height: 180px;
+  position: relative;
+  width: 180px;
+}
+
+.starry-bubble {
+  animation: float 8s ease-in-out infinite alternate;
+  background: radial-gradient(
+    circle at 70% 70%,
+    rgba(60, 120, 255, 0.1) 0,
+    rgba(30, 60, 120, 0.1) 50%,
+    transparent 100%
+  );
+  height: 220px;
+  left: -20px;
+  top: -20px;
+  width: 220px;
+}
+
+.starry-bubble,
+.starry-scene {
+  border-radius: 50%;
+  position: absolute;
+}
+
+.starry-scene {
+  animation: pulse 3s ease-in-out infinite alternate;
+  background: radial-gradient(circle, #b0c4ff, #d0e0ff);
+  box-shadow:
+    0 0 40px rgba(120, 150, 255, 0.4),
+    inset 0 0 20px hsla(0, 0%, 100%, 0.4);
+  height: 100%;
+  overflow: hidden;
+  transform: scale(0.9);
+  width: 100%;
+}
+
+[data-theme='Dark'] .starry-scene {
+  background: radial-gradient(circle at 30% 30%, #243875, #0e1a38);
+  box-shadow:
+    0 0 60px rgba(79, 128, 255, 0.3),
+    inset 0 0 30px rgba(79, 128, 255, 0.2);
+}
+
+.scene-glow {
+  background: radial-gradient(circle at 30% 30%, hsla(0, 0%, 100%, 0.1) 0, transparent 60%);
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+.planet {
+  animation: rotate 20s linear infinite;
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(170, 140, 252, 0.6);
+  height: 50px;
+  left: 50%;
+  overflow: hidden;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+}
+
+.planet-texture {
+  background: radial-gradient(
+    circle at 70% 70%,
+    transparent 0,
+    rgba(0, 0, 0, 0.1) 30%,
+    rgba(0, 0, 0, 0.2) 80%
+  );
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+.planet-ring {
+  border: 3px solid hsla(0, 0%, 100%, 0.3);
+  border-radius: 50%;
+  box-shadow: 0 0 10px hsla(0, 0%, 100%, 0.2);
+  height: 15px;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%) rotateX(75deg);
+  width: 70px;
+}
+
+.planet-crater {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.orbit,
+.planet-crater {
+  border-radius: 50%;
+  position: absolute;
+}
+
+.orbit {
+  border: 1px solid hsla(0, 0%, 100%, 0.1);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.orbit-1 {
+  height: 120px;
+  width: 120px;
+}
+
+.orbit-2 {
+  border-color: hsla(0, 0%, 100%, 0.15);
+  height: 90px;
+  width: 90px;
+}
+
+.star {
+  animation: twinkle var(--duration, 2s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 3px hsla(0, 0%, 100%, 0.3);
+  filter: blur(0.5px);
+}
+
+.meteor,
+.star {
+  opacity: 0;
+  position: absolute;
+}
+
+.meteor {
+  animation: meteor 4s linear infinite;
+  animation-delay: var(--delay, 0s);
+  background: linear-gradient(
+    180deg,
+    hsla(0, 0%, 100%, 0) 0,
+    hsla(0, 0%, 100%, 0.8) 50%,
+    hsla(0, 0%, 100%, 0) 100%
+  );
+  box-shadow: 0 0 10px hsla(0, 0%, 100%, 0.4);
+  filter: blur(1px);
+  transform: rotate(45deg);
+}
+
+@keyframes pulse {
+  0%,
+  to {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  to {
+    filter: blur(1px);
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    filter: blur(0.5px);
+    opacity: var(--opacity, 0.85);
+    transform: scale(1);
+  }
+}
+
+@keyframes meteor {
+  0% {
+    height: 30px;
+    opacity: 0;
+    transform: translate(calc(-50% + 110px), calc(-50% - 110px)) rotate(45deg);
+    width: 1px;
+  }
+  10% {
+    height: 50px;
+    opacity: 1;
+    width: 2px;
+  }
+  20% {
+    height: 30px;
+    opacity: 0;
+    transform: translate(calc(-50% - 110px), calc(-50% + 110px)) rotate(45deg);
+    width: 1px;
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% - 110px), calc(-50% + 110px)) rotate(45deg);
+  }
+}
+
+@keyframes float {
+  0%,
+  to {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(1turn);
+  }
+}

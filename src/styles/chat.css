@@ -1,0 +1,611 @@
+/* =========================================================================
+   留言板（原站 chat.html 的内联样式）
+   ---------------------------------------------------------------------------
+   SPA 里两个页面共用一份文档，所以：
+   1. 所有选择器都挂在 .chat-page 下，避免与首页的 .logo / .card 等重名；
+   2. 原站 chat.html 重新定义了 fadeIn / float，会覆盖首页同名动画，
+      这里改名为 chatFadeIn / chatFloat，渲染结果一致。
+   ========================================================================= */
+
+:root {
+  --primary-gradient: linear-gradient(135deg, #6e8efb, #6e8efb);
+  --primary-color: #6e8efb;
+  --text-color: #2d3748;
+  --bg-color: linear-gradient(135deg, #f6f9fc, #edf1f7);
+  --card-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-focus: #6e8efb;
+  --error-color: #ff4444;
+  --success-color: #4caf50;
+  --border-radius: 12px;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+[data-theme='Dark'] {
+  --primary-gradient: linear-gradient(135deg, #a777e3, #a777e3);
+  --primary-color: #a777e3;
+  --text-color: #e2e8f0;
+  --bg-color: linear-gradient(135deg, #2d3748, #1a202c);
+  --card-bg: #2d3748;
+  --input-border: #4a5568;
+  --input-focus: #a777e3;
+  --error-color: #fc8181;
+  --success-color: #48bb78;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.chat-page,
+.chat-page * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+.chat-page {
+  align-items: center;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+}
+
+/* ---------- 卡片 ---------- */
+.chat-page .card {
+  animation: chatFadeIn 0.6s ease;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  max-width: 600px;
+  overflow: hidden;
+  padding: 30px;
+  position: relative;
+  width: 100%;
+  z-index: 10;
+}
+
+.chat-page .card::before {
+  background: var(--primary-gradient);
+  content: '';
+  height: 0;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
+
+.chat-page .header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.chat-page .back-btn {
+  align-items: center;
+  color: var(--text-color);
+  display: flex;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.chat-page .back-btn svg {
+  margin-right: 4px;
+  transition: transform 0.3s ease;
+}
+
+.chat-page .back-btn:hover {
+  color: var(--primary-color);
+}
+
+.chat-page .back-btn:hover svg {
+  transform: translateX(-3px);
+}
+
+.chat-page .theme-toggle {
+  position: relative;
+}
+
+.chat-page .theme-switch {
+  height: 0;
+  opacity: 0;
+  position: absolute;
+  width: 0;
+}
+
+.chat-page .switch-label {
+  background: var(--primary-gradient);
+  border-radius: 20px;
+  cursor: pointer;
+  display: block;
+  height: 20px;
+  position: relative;
+  transition: var(--transition);
+  width: 40px;
+}
+
+.chat-page .toggle-icon {
+  align-items: center;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  font-size: 10px;
+  height: 16px;
+  justify-content: center;
+  left: 2px;
+  position: absolute;
+  top: 2px;
+  transition: transform 0.3s ease;
+  width: 16px;
+}
+
+.chat-page .theme-switch:checked + .switch-label .toggle-icon {
+  transform: translateX(20px);
+}
+
+.chat-page .logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.chat-page .logo {
+  background-clip: content-box, border-box;
+  background-origin: border-box;
+  background-position: center;
+  background-size: cover;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  height: 80px;
+  position: relative;
+  width: 80px;
+}
+
+.chat-page .logo::before {
+  background: var(--primary-gradient) border-box;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  bottom: -5px;
+  content: '';
+  left: -5px;
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+}
+
+.chat-page .card-title {
+  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* 注意：background 简写会把 background-clip 重置为 border-box，
+   所以必须先写 background，再写 -webkit-background-clip，顺序不能调换。 */
+.chat-page .gradient-text {
+  animation: backgroundSizeAnimation 10s ease-in-out infinite;
+  background: var(--primary-gradient);
+  background-position: 0;
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.chat-page .card-subtitle {
+  color: var(--text-color);
+  margin-bottom: 30px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* ---------- 表单 ---------- */
+.chat-page .message-form {
+  width: 100%;
+}
+
+.chat-page .input-group {
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.chat-page .input-group label {
+  color: var(--text-color);
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.chat-page .required {
+  color: var(--error-color);
+  margin-left: 2px;
+}
+
+.chat-page .input-container {
+  align-items: center;
+  display: flex;
+  position: relative;
+}
+
+.chat-page .input-container svg {
+  color: var(--text-color);
+  left: 12px;
+  opacity: 0.6;
+  position: absolute;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.chat-page .input-container input,
+.chat-page .input-container textarea {
+  background: none;
+  border: 2px solid var(--input-border);
+  border-radius: var(--border-radius);
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 16px;
+  padding: 15px 15px 15px 40px;
+  resize: none;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.chat-page .textarea-container {
+  align-items: flex-start;
+}
+
+.chat-page .textarea-container svg {
+  top: 15px;
+}
+
+.chat-page .textarea-container textarea {
+  min-height: 120px;
+}
+
+.chat-page .input-container input:focus,
+.chat-page .input-container textarea:focus {
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(110, 142, 251, 0.2);
+  outline: 0;
+}
+
+.chat-page .input-container input:focus + svg,
+.chat-page .input-container textarea:focus + svg {
+  color: var(--primary-color);
+  opacity: 1;
+}
+
+.chat-page .input-container.error input,
+.chat-page .input-container.error textarea {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.2);
+}
+
+.chat-page .error-message {
+  animation: shake 0.5s ease-in-out;
+  color: var(--error-color);
+  display: none;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.chat-page .error-message.show {
+  display: block;
+}
+
+.chat-page .submit-btn {
+  align-items: center;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: var(--border-radius);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  justify-content: center;
+  overflow: hidden;
+  padding: 18px;
+  position: relative;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.chat-page .submit-btn::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  content: '';
+  height: 100%;
+  left: -100%;
+  position: absolute;
+  top: 0;
+  transition: all 0.6s ease;
+  width: 100%;
+}
+
+.chat-page .submit-btn:hover::before {
+  left: 100%;
+}
+
+.chat-page .btn-icon {
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+}
+
+.chat-page .submit-btn:hover .btn-icon {
+  transform: translateX(3px);
+}
+
+.chat-page .submit-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.chat-page .submit-btn.loading {
+  color: transparent;
+  pointer-events: none;
+  position: relative;
+}
+
+.chat-page .submit-btn.loading::after {
+  animation: spin 0.8s linear infinite;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  content: '';
+  height: 20px;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+}
+
+.chat-page .footer {
+  color: var(--text-color);
+  font-size: 14px;
+  margin-top: 30px;
+  opacity: 0.6;
+  text-align: center;
+}
+
+.chat-page .footer a {
+  color: var(--text-color);
+  text-decoration: none;
+  transition: opacity 0.3s ease;
+}
+
+.chat-page .footer a:hover {
+  color: var(--primary-color);
+  opacity: 1;
+}
+
+.chat-page .separator {
+  margin: 0 8px;
+}
+
+/* ---------- Toast ---------- */
+.chat-page .toast {
+  align-items: center;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  color: var(--text-color);
+  display: flex;
+  max-width: calc(100vw - 40px);
+  opacity: 0;
+  padding: 15px 20px;
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  transform: translateX(100%);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.chat-page .toast.active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.chat-page .toast.success {
+  border-left: 4px solid var(--success-color);
+}
+
+.chat-page .toast.error {
+  border-left: 4px solid var(--error-color);
+}
+
+.chat-page .toast-icon {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  height: 24px;
+  justify-content: center;
+  margin-right: 12px;
+  width: 24px;
+}
+
+.chat-page .toast-icon.success {
+  color: var(--success-color);
+}
+
+.chat-page .toast-icon.error {
+  color: var(--error-color);
+  display: none;
+}
+
+.chat-page .toast.error .toast-icon.error {
+  display: flex;
+}
+
+.chat-page .toast.error .toast-icon.success {
+  display: none;
+}
+
+.chat-page .toast-content {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* ---------- 背景浮动圆 ---------- */
+.chat-page .background-animation {
+  height: 100%;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
+
+.chat-page .circle {
+  animation: chatFloat 15s infinite ease-in-out;
+  background: linear-gradient(to right, rgba(110, 142, 251, 0.1), rgba(167, 119, 227, 0.1));
+  border-radius: 50%;
+  position: absolute;
+}
+
+.chat-page .circle1 {
+  animation-delay: 0s;
+  height: 300px;
+  right: -150px;
+  top: -150px;
+  width: 300px;
+}
+
+.chat-page .circle2 {
+  animation-delay: -5s;
+  bottom: -250px;
+  height: 500px;
+  left: -250px;
+  width: 500px;
+}
+
+.chat-page .circle3 {
+  animation-delay: -10s;
+  bottom: 100px;
+  height: 200px;
+  right: 100px;
+  width: 200px;
+}
+
+.chat-page .sr-only {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@keyframes chatFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  25% {
+    transform: translate(50px, 50px) rotate(5deg);
+  }
+  50% {
+    transform: translate(0, 100px) rotate(10deg);
+  }
+  75% {
+    transform: translate(-50px, 50px) rotate(5deg);
+  }
+}
+
+@keyframes chatFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-page {
+    padding: 20px;
+  }
+
+  .chat-page .card {
+    padding: 25px;
+  }
+
+  .chat-page .card-title {
+    font-size: 24px;
+  }
+
+  .chat-page .input-group label {
+    font-size: 15px;
+  }
+
+  .chat-page .input-container input,
+  .chat-page .input-container textarea,
+  .chat-page .submit-btn {
+    font-size: 15px;
+    padding: 12px 12px 12px 35px;
+  }
+
+  .chat-page .submit-btn {
+    padding: 14px;
+  }
+
+  .chat-page .toast {
+    left: 20px;
+    max-width: none;
+    right: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-page,
+  .chat-page *,
+  .chat-page *::after,
+  .chat-page *::before {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+  }
+}
