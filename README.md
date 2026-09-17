@@ -26,6 +26,26 @@ npm run preview  # 预览构建产物
 
 ---
 
+## 在线预览
+
+推送到 `main` 分支后会自动构建并发布到 GitHub Pages（见 `.github/workflows/deploy.yml`）：
+
+**https://jiepijiang.github.io/jerry-blog/**
+
+几个和部署相关的点：
+
+- 站点挂在 `/<仓库名>/` 子路径下，所以 `vite.config.js` 顶部的 `REPO_NAME` 必须和仓库名一致。
+  换仓库名、或之后改用自定义域名 / 用户主页仓库（`<用户名>.github.io`），改那一行即可。
+- 资源路径不能写死成 `/static/...`。Vite 只会重写 `index.html` 和 CSS 里的绝对路径，
+  JS 字符串得用 `src/data/site.js` 里那个 `asset()` 助手包一层。
+- 构建时会额外产出一份 `404.html`（内容同 `index.html`）。GitHub Pages 没有 SPA fallback，
+  直接打开或刷新 `/jerry-blog/chat` 时靠它回退，前端路由再接管。
+  这种回退的 HTTP 状态码仍是 404，属于该方案的固有代价；站内点击链接是前端跳转，不受影响。
+- 首次部署后如果页面 404，去仓库 **Settings → Pages** 确认 Source 选的是
+  **GitHub Actions**（而不是 "Deploy from a branch"）。
+
+---
+
 ## 参考来源与声明
 
 - **复刻对象**：[https://xywml.com/](https://xywml.com/)（原站站长 Miyako）

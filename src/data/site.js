@@ -5,9 +5,20 @@
  * 布局结构（卡片数量、栏位数）保持与原站一致，因此增删条目不会破坏版式。
  */
 
+/**
+ * 静态资源路径前缀。
+ *
+ * GitHub Pages 把站点挂在 /<仓库名>/ 子路径下，写死的 '/static/...' 会 404。
+ * Vite 只会重写 index.html 和 CSS 里的绝对路径，JS 里的字符串得自己加前缀。
+ * 本地 dev 时 BASE_URL 就是 '/'，所以两种环境写法统一，不用改。
+ *
+ * 新增资源照抄这个写法即可：asset('static/img/xxx.png')
+ */
+const asset = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
+
 export const profile = {
   name: 'Jerry',
-  avatar: '/static/img/logo.jpg',
+  avatar: asset('static/img/logo.jpg'),
   /** 首屏大标题前缀 */
   hello: "Hello I'm",
   /** 第一行简介 */
@@ -45,18 +56,18 @@ export const socials = [
 
 /** site 区卡片（第一组：图片在右，悬停时收起） */
 export const siteProjects = [
-  { title: '沧海拾遗', desc: '童年游戏平台', img: '/static/img/i6.png', href: 'https://example.com' },
-  { title: '博客', desc: '记录摆烂日常', img: '/static/img/i1.png', href: 'https://example.com' },
-  { title: '串口助手', desc: '优雅的在线串口助手', img: '/static/img/i2.png', href: 'https://example.com' },
-  { title: '音乐站', desc: '来点音乐吧', img: '/static/img/i4.png', action: 'music' },
+  { title: '沧海拾遗', desc: '童年游戏平台', img: asset('static/img/i6.png'), href: 'https://example.com' },
+  { title: '博客', desc: '记录摆烂日常', img: asset('static/img/i1.png'), href: 'https://example.com' },
+  { title: '串口助手', desc: '优雅的在线串口助手', img: asset('static/img/i2.png'), href: 'https://example.com' },
+  { title: '音乐站', desc: '来点音乐吧', img: asset('static/img/i4.png'), action: 'music' },
 ]
 
 /** project 区卡片（第二组：宽高更大） */
 export const toolProjects = [
-  { title: '2FA', desc: '双重身份验证工具', img: '/static/img/i1.png', href: 'https://example.com' },
-  { title: '串口助手', desc: '优雅的在线串口助手', img: '/static/img/i2.png', href: 'https://example.com' },
-  { title: '画板', desc: 'Powered by Excalidraw', img: '/static/img/i3.png', href: 'https://example.com' },
-  { title: '流程图', desc: 'Powered by Draw.io', img: '/static/img/i4.png', href: 'https://example.com' },
+  { title: '2FA', desc: '双重身份验证工具', img: asset('static/img/i1.png'), href: 'https://example.com' },
+  { title: '串口助手', desc: '优雅的在线串口助手', img: asset('static/img/i2.png'), href: 'https://example.com' },
+  { title: '画板', desc: 'Powered by Excalidraw', img: asset('static/img/i3.png'), href: 'https://example.com' },
+  { title: '流程图', desc: 'Powered by Draw.io', img: asset('static/img/i4.png'), href: 'https://example.com' },
 ]
 
 /**
@@ -69,14 +80,14 @@ export const toolProjects = [
  */
 export const snake = {
   followTheme: false,
-  Light: '/static/svg/snake-Light.svg',
-  Dark: '/static/svg/snake-Dark.svg',
+  Light: asset('static/svg/snake-Light.svg'),
+  Dark: asset('static/svg/snake-Dark.svg'),
 }
 
 /** 技能树 */
 export const skills = {
-  pc: '/static/svg/skillPc.svg',
-  wap: '/static/svg/skillWap.svg',
+  pc: asset('static/svg/skillPc.svg'),
+  wap: asset('static/svg/skillWap.svg'),
 }
 
 export const footer = {
