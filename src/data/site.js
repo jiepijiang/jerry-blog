@@ -58,7 +58,12 @@ export const socials = [
 export const siteProjects = [
   { title: '沧海拾遗', desc: '童年游戏平台', img: asset('static/img/i6.png'), href: 'https://example.com' },
   { title: '博客', desc: '记录摆烂日常', img: asset('static/img/i1.png'), href: 'https://example.com' },
-  { title: '串口助手', desc: '优雅的在线串口助手', img: asset('static/img/i2.png'), href: 'https://example.com' },
+  {
+    title: '工具导航',
+    desc: '网址导航与书签管理',
+    img: asset('static/img/i2.png'),
+    href: 'https://jiepijiang.github.io/jerry-tools/',
+  },
   { title: '音乐站', desc: '来点音乐吧', img: asset('static/img/i4.png'), action: 'music' },
 ]
 
