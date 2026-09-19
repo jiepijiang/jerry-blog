@@ -82,7 +82,7 @@ npm run preview  # 预览构建产物
 │   ├── fonts/                  # Ubuntu（正文）、Pacifico（渐变标题）
 │   ├── img/                    # 头像、背景、项目卡片图标
 │   ├── music/                  # 歌单音频与封面（《夜航》为原创纯音乐）
-│   └── svg/                    # 贪吃蛇贡献图、技能树（技能树由脚本生成）
+│   └── svg/                    # 技能树（由脚本生成；原站的贪吃蛇已移除）
 ├── scripts/
 │   ├── gen-skill-tree.mjs      # 技能树 SVG 生成器（零依赖）
 │   └── skill-icons.json        # 图标数据（simple-icons 导出的品牌 path）
@@ -105,7 +105,7 @@ npm run preview  # 预览构建产物
     ├── components/
     │   ├── StarLoader.vue      # 星云加载层（星点 / 流星 / 行星 / 陨石坑）
     │   ├── LeftSidebar.vue     # 头像 / 信息 / 标签 / 时间轴
-    │   ├── ProfileHeader.vue   # 渐变标题 / 打字简介 / 图标条 / FPS / 贪吃蛇
+    │   ├── ProfileHeader.vue   # 渐变标题 / 打字简介 / 图标条 / FPS / 最近在做什么
     │   ├── SectionTitle.vue
     │   ├── ProjectList.vue
     │   ├── ProjectCard.vue     # 悬停展开动效 + 按下反馈
@@ -132,7 +132,7 @@ npm run preview  # 预览构建产物
 | `locations` / `tags` / `timeline` | 左侧三块卡片 |
 | `socials` | 图标条（`action: 'music'` 表示点击打开音乐幕帘） |
 | `siteProjects` / `toolProjects` | 两组项目卡片 |
-| `snake` | 贪吃蛇 SVG；`followTheme: false` 时恒用 Light 版（= 原站行为） |
+| `github` | 首屏「最近在做什么」：拉 GitHub 公开 API 显示最近推送的仓库（原站这里是贪吃蛇贡献图） |
 | `skills` | 技能树 SVG（桌面 / 移动两版）。**由脚本生成**，见下 |
 | `footer` | 备案号（默认留空，见下）与版权 |
 
@@ -142,6 +142,25 @@ npm run preview  # 预览构建产物
 > 将来迁回国内主机时把自己的号填回去即可，`SiteFooter.vue` 会处理空值。
 | `guestbook.endpoint` | 留言板接口；留空则走本地成功流程（成功后 3 秒跳回首页，与原站一致） |
 | `playlist` | 播放器歌单（`cover` / `src` 填上即可真实播放） |
+
+### 时间轴的日期
+
+`timeline` 里的日期尽量用**可查证的事实**（`src/data/site.js` 顶部注释列了每条的出处）：
+
+| 条目 | 日期 | 依据 |
+| --- | --- | --- |
+| 自建博客与导航站 | 2026.9 | jerry-site / jerry-tools 创建于 2026-09 |
+| 扫码 H5 · 停车码 | 2025.10 | `scanCode-demo`（H5 调摄像头扫码）创建于 2025-10-29 |
+| 折腾 Next.js 博客 | 2022.3 | `nextjs-blog-theme` 创建于 2022-03-10 |
+| 微信小程序 | 2020.5 | `yougoushop` 创建于 2020-05-15 |
+| 注册 GitHub | 2019.1 | 账号创建于 2019-01-02 |
+
+> ⚠️ **`前端 + 嵌入式前端 2023.1` 这一条的日期是推断的，不是查到的。**
+> 公开仓库在 2023.1 之后断了近三年，据此推断这段时间在做嵌入式前端。
+> 请改成真实时间，或者直接删掉这条。
+
+原先那版里的 `购置域名 2022.8` / `购买服务器 2021.3` / `开始折腾 2016.7`
+是从复刻对象继承来的（基本可以确定是原站站长的日期），已全部换掉。
 
 ### 技能树是生成的，不要手改 SVG
 
@@ -186,19 +205,25 @@ node scripts/gen-skill-tree.mjs
 **结果**
 
 > 下表是**文案还沿用原站时**测的，记录的是「布局 / 动效 / 交互」的还原度。
-> 2026-09-19 把文案换成自己的之后，凡是含文字的区域必然出现内容差异
-> （和「站名不同」是同一类），**结构性指标不受影响** —— 页面总高仍是 1118px。
-> 一个具体例子：页脚清掉冒用的备案号后，`footer` 由 1440×38 变成 **1440×34**，
-> 因为 `line-height: normal` 下纯拉丁文案的行盒（14px）比含中文的（18px）矮，
-> 页脚是 `absolute + bottom:0` 不参与文档流，所以页面总高不变。
+> 2026-09-19 起内容逐步换成自己的（文案、技能树、首屏那一块），凡是含内容的区域
+> 必然出现差异，**结构性骨架不受影响**。
+>
+> 已知的两处由「内容替换」带来的高度变化，都不是回归：
+>
+> - 页脚清掉冒用的备案号后，`footer` 由 1440×38 变成 **1440×34**。
+>   因为 `line-height: normal` 下纯拉丁文案的行盒（14px）比含中文的（18px）矮；
+>   页脚是 `absolute + bottom:0` 不参与文档流，所以当时页面总高没变。
+> - 首屏贪吃蛇换成「最近在做什么」后，页面总高 **1118 → 1115**。
+>   原站那张 `<img>` 是行内元素，底部有约 3px 的基线间隙；新块是 flex 容器没有这个间隙。
+>   新块的容器保留了原图 `880 / 192` 的宽高比，所以盒子本身没动，只是少了那 3px。
 
 | 检查项 | 结果 |
 | --- | --- |
 | 首页关键元素盒模型（坐标 / 宽高 / 字号 / 字重 / 颜色） | 22 项全部 0px 偏差 |
 | 留言板关键元素盒模型（卡片 / 输入框 / 按钮 / 页脚等 17 项） | Light、Dark 两套主题下均 0px 偏差 |
 | 留言板图标上色（6 个 SVG 的 `fill`） | 与原站完全一致 |
-| 页面总高（1440 宽） | 双方均 1118px |
-| 响应式 1000×900 / 700×900 / 375×812 | 三档页面总高 1327 / 2160 / 1697，全部 0 偏差 |
+| 页面总高（1440 宽） | 原站 1118px；本站 1115px（差值见上方说明） |
+| 响应式 1000×900 / 700×900 / 375×812 | 原站 1327 / 2160 / 1697；本站 1324 / 2137 / 1745 |
 | 左侧栏 / 卡片区 / 技能树 / 页脚 像素差异 | 0 差异像素 |
 | 首页整页像素差异 | 0.57%，全部来自「站名文字不同」与「动画帧不同」 |
 | 留言板整页像素差异（Light / Dark） | 0.36% / 0.35%，仅站名与版权两行文字 |
@@ -232,9 +257,12 @@ node scripts/gen-skill-tree.mjs
 3. **主题开关滑块位置**：原站在「系统深色 + 从未手动切换过」时，页面已经是 Dark，
    但滑块停在左侧（`checked` 只按 `localStorage` 算），要点两下才切到 Light。
    本项目让滑块反映真实主题，点一下即可切换。
-4. **贪吃蛇配色**：原站 `snake-Dark.svg` 是死资源——唯一会换图的 `script.js` 读的是
-   那个只写不读的 cookie，所以首页贪吃蛇恒为 Light 版。本项目默认保持该行为，
-   想跟随主题把 `site.js` 里的 `snake.followTheme` 打开即可。
+4. **首屏的贪吃蛇贡献图 → 已整体移除**，换成「最近在做什么」（拉 GitHub 公开 API）。
+   原站那张是 [Platane/snk](https://github.com/Platane/snk) 生成的**复刻对象站长的**
+   GitHub 贡献图，属于「挂着别人的数据」。而换成自己的也走不通 —— 实测
+   53 周 371 天里只有 6 天有提交（1.6%），一条蛇爬在 98.4% 空白的灰格子上像坏了。
+   顺带说明：原站 `snake-Dark.svg` 本来就是死资源（唯一会换图的 `script.js` 读的是
+   那个只写不读的 cookie），所以两个 SVG 文件都已从仓库移除。
 5. **时间轴脉冲点**：原站写了 `animation: focus 1.8s ease infinite` 却没定义 `@keyframes focus`，
    实际是静态绿点。本项目补上了这个明显的脉冲意图（`LeftSidebar.vue`，注释已标明，
    删掉 `@keyframes focus` 即可回到原站状态）。
@@ -279,8 +307,7 @@ node scripts/gen-skill-tree.mjs
   `src` / `cover` / `lyric`（LRC 格式）→ 重新部署。
   不想部署也能听：播放器里「选择本地音频播放」，或直接把音频文件拖进去。
 - **头像 / 背景**：替换 `public/static/img/logo.jpg`、`background.jpg`
-- **贪吃蛇**：原站用的是 [Platane/snk](https://github.com/Platane/snk) 生成的
-  GitHub 贡献图动画，可用你的用户名重新生成后覆盖 `public/static/svg/snake-*.svg`
-- **技能树**：替换 `public/static/svg/skillPc.svg`（桌面）与 `skillWap.svg`（移动）
+- **技能树**：改 `scripts/skill-icons.json` 后跑 `node scripts/gen-skill-tree.mjs`
+  （不要手改 SVG，见上文「技能树是生成的」）
 - **项目图标**：替换 `public/static/img/i1~i6.png`（建议 200×200 透明 PNG）
 - **字体**：`public/static/fonts/`（Ubuntu 正文、Pacifico 渐变标题），换成自己的或改 `base.css` 里的 `@font-face`

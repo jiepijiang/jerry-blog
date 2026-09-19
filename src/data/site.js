@@ -50,20 +50,34 @@ export const tags = ['Vue', 'JavaScript', 'Node.js', '微信小程序', '音乐'
  * 左侧时间轴（第一条会高亮脉冲）
  * 容器 #line 是固定 200px 高的滚动列表，条目多一条少一条都不会撑破版式。
  * 第一条放「当前状态」，往下按时间倒序。
+ *
+ * **日期依据**（尽量用可查证的事实，别编）：
+ *   - 2026.9   自建博客与导航站 —— jerry-site / jerry-tools 创建于 2026-09
+ *   - 2025.10  扫码 H5 · 停车码 —— scanCode-demo（H5 调摄像头扫码）创建于 2025-10-29
+ *   - 2022.3   折腾 Next.js 博客 —— nextjs-blog-theme 创建于 2022-03-10
+ *   - 2020.5   微信小程序 —— yougoushop 创建于 2020-05-15
+ *   - 2019.1   注册 GitHub —— 账号创建于 2019-01-02（API 查得）
+ * 之前那版里「购置域名 2022.8 / 购买服务器 2021.3 / 开始折腾 2016.7」
+ * 是从复刻对象继承来的，基本可以确定是原站站长的日期，已全部换掉。
  */
 export const timeline = [
   { title: '未完待续', date: '2026.9' },
   { title: '自建博客与导航站', date: '2026.9' },
-  { title: '购置域名', date: '2022.8' },
-  { title: '购买服务器', date: '2021.3' },
+  { title: '扫码 H5 · 停车码', date: '2025.10' },
+  /**
+   * ⚠️ 这条的日期是**推断的**，不是查到的 —— 公开仓库在 2023.1 之后断了近三年，
+   * 推断这段时间在做嵌入式前端。**等 Jerry 确认或改成真实时间。**
+   */
+  { title: '前端 + 嵌入式前端', date: '2023.1' },
+  { title: '折腾 Next.js 博客', date: '2022.3' },
+  { title: '微信小程序', date: '2020.5' },
   { title: '注册 GitHub', date: '2019.1' },
-  { title: '开始折腾', date: '2016.7' },
 ]
 
 /** 社交 / 功能入口（iconTip 为悬停展开后显示的文案） */
 export const socials = [
   { key: 'github', tip: 'Github', href: 'https://github.com/jiepijiang' },
-  { key: 'mail', tip: 'Mail', href: 'mailto:hello@example.com' },
+  { key: 'mail', tip: 'Mail', href: 'mailto:jiepijiang@gmail.com' },
   { key: 'message', tip: '留言', href: '/chat' },
   { key: 'music', tip: '音乐', action: 'music' },
 ]
@@ -112,17 +126,37 @@ export const toolProjects = [
 ]
 
 /**
- * 贪吃蛇：由 GitHub 贡献图生成（https://github.com/Platane/snk）
+ * 「最近在做什么」—— 首页首屏那一块，原站放的是贪吃蛇贡献图
+ * ---------------------------------------------------------------------------
+ * 为什么换掉贪吃蛇：那张图是复刻对象 xywml.com 站长的 **GitHub 贡献图**
+ * （Platane/snk 生成），属于「挂着别人的数据」。
  *
- * 原站首页的贪吃蛇恒为 Light 版：唯一会换图的 static/js/script.js 读的是
- * cookie('themeState')，而能改写这个 cookie 的 `#myonoffswitch` 在 DOM 里并不存在
- * → snake-Dark.svg 实际是死资源。
- * 想让配色跟随主题就把 followTheme 打开 —— 这是本项目的一处主动增强。
+ * 那为什么不换成 Jerry 自己的贡献图？查了一下，**换不了**：
+ *   53 周 371 天里只有 6 天有提交（1.6%），全年 20 次，单日最高 7 次。
+ *   一条蛇爬在 98.4% 空白的灰格子上，看起来像坏了。
+ *
+ * 所以改成拉 GitHub 公开 API 显示最近推送的仓库 —— 动态、永远有内容、
+ * 而且真的是自己的。未登录时 GitHub 限流 60 次/小时/IP，个人站够用。
+ * 取不到数据时**保持原高度**并显示一行静默提示，不会把版式顶动。
  */
-export const snake = {
-  followTheme: false,
-  Light: asset('static/svg/snake-Light.svg'),
-  Dark: asset('static/svg/snake-Dark.svg'),
+export const github = {
+  username: 'jiepijiang',
+  /** 最多显示几个仓库（2×2 网格，改成别的数字要同步调 CSS 高度） */
+  limit: 4,
+  title: '最近在做什么',
+  /** 语言色点，取 GitHub 官方配色 */
+  languageColors: {
+    Vue: '#41B883',
+    JavaScript: '#F1E05A',
+    TypeScript: '#3178C6',
+    HTML: '#E34C26',
+    CSS: '#563D7C',
+    SCSS: '#C6538C',
+    Python: '#3572A5',
+    Java: '#B07219',
+    'C++': '#F34B7D',
+    C: '#555555',
+  },
 }
 
 /** 技能树 */

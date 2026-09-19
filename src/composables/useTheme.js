@@ -20,8 +20,10 @@ import { ref } from 'vue'
  * 另外两套是死代码：
  *   - static/js/script.js（首页）：读 cookie('themeState') || 'Light'，写 cookie + 换贪吃蛇。
  *     它注册得更早，data-theme 随后被 loader.bundle.js 覆盖；而 `#myonoffswitch`
- *     在 DOM 里根本不存在，cookie 没有任何 UI 能改写 → `snake-Dark.svg` 是死资源，
- *     首页贪吃蛇恒为 Light 版。
+ *     在 DOM 里根本不存在，cookie 没有任何 UI 能改写 → 原站的 `snake-Dark.svg`
+ *     是死资源，首页贪吃蛇恒为 Light 版。
+ *     （2026-09-19 起首页那块贪吃蛇已整体移除 —— 它是复刻对象站长的贡献图，
+ *      换成了拉 GitHub API 的「最近在做什么」，所以这两个 SVG 也不在仓库里了。）
  *   - chat.html 内联脚本：data-theme 同样被覆盖，但 `#theme-switch.checked` 只按
  *     `localStorage('theme') === 'Dark'` 算，不看系统偏好。
  *
