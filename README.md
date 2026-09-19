@@ -82,7 +82,10 @@ npm run preview  # 预览构建产物
 │   ├── fonts/                  # Ubuntu（正文）、Pacifico（渐变标题）
 │   ├── img/                    # 头像、背景、项目卡片图标
 │   ├── music/                  # 歌单音频与封面（《夜航》为原创纯音乐）
-│   └── svg/                    # 贪吃蛇贡献图、技能树
+│   └── svg/                    # 贪吃蛇贡献图、技能树（技能树由脚本生成）
+├── scripts/
+│   ├── gen-skill-tree.mjs      # 技能树 SVG 生成器（零依赖）
+│   └── skill-icons.json        # 图标数据（simple-icons 导出的品牌 path）
 └── src/
     ├── main.js
     ├── App.vue                 # 全局壳：加载动画 / 路由 / 音乐幕帘 / 灯箱
@@ -130,7 +133,7 @@ npm run preview  # 预览构建产物
 | `socials` | 图标条（`action: 'music'` 表示点击打开音乐幕帘） |
 | `siteProjects` / `toolProjects` | 两组项目卡片 |
 | `snake` | 贪吃蛇 SVG；`followTheme: false` 时恒用 Light 版（= 原站行为） |
-| `skills` | 技能树 SVG（桌面 / 移动两版） |
+| `skills` | 技能树 SVG（桌面 / 移动两版）。**由脚本生成**，见下 |
 | `footer` | 备案号（默认留空，见下）与版权 |
 
 > **关于 `footer.icp`**：这里原先是复刻对象 xywml.com 的备案号
@@ -139,6 +142,38 @@ npm run preview  # 预览构建产物
 > 将来迁回国内主机时把自己的号填回去即可，`SiteFooter.vue` 会处理空值。
 | `guestbook.endpoint` | 留言板接口；留空则走本地成功流程（成功后 3 秒跳回首页，与原站一致） |
 | `playlist` | 播放器歌单（`cover` / `src` 填上即可真实播放） |
+
+### 技能树是生成的，不要手改 SVG
+
+`public/static/svg/skillPc.svg` / `skillWap.svg` 由脚本产出。原来的那面图标墙是
+复刻对象的（混着 Go / Java / Qt / Kotlin / IntelliJ / Photoshop / 3ds Max），
+跟本站的前端定位对不上，已整体重做。
+
+改图标清单 → 编辑 `scripts/skill-icons.json`（顺序即排列顺序）→ 然后：
+
+```bash
+node scripts/gen-skill-tree.mjs
+```
+
+图标来自 [simple-icons](https://simpleicons.org/)（官方品牌 SVG，CC0）。
+数据单独放在 JSON 里是为了让生成器**零依赖** —— 不用为了重新生成一面图标墙
+去装一个几十 MB 的包，图标集也跟着仓库一起被版本化固定住。
+
+**版式参数与原版逐项一致**（方块 256、圆角 60、底色 `#242938`、列距 300），
+所以渲染尺寸不变、首页总高不受影响：
+
+| 文件 | 网格 | viewBox | 外层尺寸 |
+| --- | --- | --- | --- |
+| `skillPc.svg` | 18 列 × 2 行 | `0 0 5356 556` | 1004.25 × 104.25 |
+| `skillWap.svg` | 8 列 × 5 行 | `0 0 2356 1456` | 441.75 × 273 |
+
+改这些参数会改变 `<img>` 的宽高比，进而影响页面总高（基准见下节），慎改。
+
+> 深色底上不够亮的图标会被自动提亮成白色（阈值：相对亮度 < 0.22）。
+> 另外有两个「亮度过关但因为是细描边而糊掉」的，在脚本的 `FORCE_WHITE`
+> 里单独列了：**MySQL**（深蓝细描边海豚 + 小字）和 **VitePress**（深蓝实心书签）。
+> 别用 WCAG 对比度去卡这件事 —— npm 的红对比度只有 2.87，比 MySQL 的 3.10 还低，
+> 但它是整块实心方块，读起来毫无问题。**决定可读性的是填充面积，不是颜色。**
 
 ---
 
