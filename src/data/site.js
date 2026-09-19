@@ -21,10 +21,16 @@ export const profile = {
   avatar: asset('static/img/logo.jpg'),
   /** 首屏大标题前缀 */
   hello: "Hello I'm",
-  /** 第一行简介 */
-  role: { icon: '💻', highlight: 'Full Stack', rest: ' Developer' },
-  /** 第二行简介：会以打字机效果逐字出现 */
-  motto: '🍃 春风若有怜花意, 可否许我再少年？',
+  /**
+   * 第一行简介。highlight 那段会套紫色高亮样式，其余照常。
+   * 注意是单行显示（.description 20px），太长在窄屏会换行。
+   */
+  role: { icon: '💻', highlight: 'Front-end', rest: ' Developer' },
+  /**
+   * 第二行简介：会以打字机效果逐字出现。
+   * 长度控制在 20 字上下 —— 太长打字动画会拖很久。
+   */
+  motto: '🔧 喜欢把东西拆开，看它到底怎么跑起来的',
 }
 
 /** 左侧信息卡 */
@@ -33,16 +39,24 @@ export const locations = [
   { key: 'city', text: 'SiChuan' },
 ]
 
-/** 左侧标签 */
-export const tags = ['电子', '计算机', 'Linux', '物理', '天文', '电影', '深度学习', '网络']
+/**
+ * 左侧标签
+ * 技能方向 + 爱好混在一排，和原站的设计一致（原站也是「计算机/物理/天文/电影」混着放）。
+ * 数量随意，容器是 flex-wrap，多了会自己换行。
+ */
+export const tags = ['Vue', 'JavaScript', 'Node.js', '微信小程序', '音乐', '电影', '摄影', '折腾']
 
-/** 左侧时间轴（第一条会高亮脉冲） */
+/**
+ * 左侧时间轴（第一条会高亮脉冲）
+ * 容器 #line 是固定 200px 高的滚动列表，条目多一条少一条都不会撑破版式。
+ * 第一条放「当前状态」，往下按时间倒序。
+ */
 export const timeline = [
-  { title: '未完待续', date: '2024.5' },
+  { title: '未完待续', date: '2026.9' },
+  { title: '自建博客与导航站', date: '2026.9' },
   { title: '购置域名', date: '2022.8' },
   { title: '购买服务器', date: '2021.3' },
-  { title: '继续折腾', date: '2020.2' },
-  { title: '...', date: '...' },
+  { title: '注册 GitHub', date: '2019.1' },
   { title: '开始折腾', date: '2016.7' },
 ]
 
@@ -54,25 +68,43 @@ export const socials = [
   { key: 'music', tip: '音乐', action: 'music' },
 ]
 
-/** site 区卡片（第一组：图片在右，悬停时收起） */
+/**
+ * site 区卡片（第一组：4 列小卡片，悬停时右侧图标收起、标题放大）
+ *
+ * 这里放「站内 / 个人入口」。href 用 http 开头会自动 target=_blank，
+ * 站内相对路径（如 /chat）走 SPA 路由。action: 'music' 表示不跳转、改成打开音乐幕帘。
+ *
+ * 文案长度：标题 ≤ 8 个汉字，desc ≤ 12 个汉字，超了会换行把 100px 的卡片撑高。
+ */
 export const siteProjects = [
-  { title: '沧海拾遗', desc: '童年游戏平台', img: asset('static/img/i6.png'), href: 'https://example.com' },
-  { title: '博客', desc: '记录摆烂日常', img: asset('static/img/i1.png'), href: 'https://example.com' },
+  { title: '博客', desc: '记录折腾日常', img: asset('static/img/i1.png'), href: 'https://jiepijiang.github.io/jerry-blog/' },
   {
     title: '工具导航',
     desc: '网址导航与书签管理',
     img: asset('static/img/i2.png'),
     href: 'https://jiepijiang.github.io/jerry-tools/',
   },
+  { title: 'GitHub', desc: '代码与开源', img: asset('static/img/i6.png'), href: 'https://github.com/jiepijiang' },
   { title: '音乐站', desc: '来点音乐吧', img: asset('static/img/i4.png'), action: 'music' },
 ]
 
-/** project 区卡片（第二组：宽高更大） */
+/**
+ * project 区卡片（第二组：同为 4 列，窄屏时变整行卡片）
+ *
+ * 这里放「工具集合」：自己的 + 常用外部工具。
+ * 原站的四张卡（2FA / 串口助手 / 画板 / 流程图）之前 href 全指向 example.com，
+ * 现在换成真实地址；串口助手因为找不到稳定可用的在线实现已经移除。
+ */
 export const toolProjects = [
-  { title: '2FA', desc: '双重身份验证工具', img: asset('static/img/i1.png'), href: 'https://example.com' },
-  { title: '串口助手', desc: '优雅的在线串口助手', img: asset('static/img/i2.png'), href: 'https://example.com' },
-  { title: '画板', desc: 'Powered by Excalidraw', img: asset('static/img/i3.png'), href: 'https://example.com' },
-  { title: '流程图', desc: 'Powered by Draw.io', img: asset('static/img/i4.png'), href: 'https://example.com' },
+  {
+    title: '停车码',
+    desc: '临时停车，扫码通知车主',
+    img: asset('static/img/i3.png'),
+    href: 'https://scnrhostplnc.feishuapp.com/app/app_17cw6j1xyk0',
+  },
+  { title: '2FA', desc: '在线 TOTP 验证码', img: asset('static/img/i1.png'), href: 'https://2fa.cn/' },
+  { title: '画板', desc: 'Powered by Excalidraw', img: asset('static/img/i4.png'), href: 'https://excalidraw.com/' },
+  { title: '流程图', desc: 'Powered by Draw.io', img: asset('static/img/i2.png'), href: 'https://app.diagrams.net/' },
 ]
 
 /**
