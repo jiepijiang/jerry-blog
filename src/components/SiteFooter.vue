@@ -1,9 +1,14 @@
 <script setup>
+import { computed } from 'vue'
 import { footer } from '@/data/site'
+
+/* icp 允许留空（本站托管在 GitHub Pages，不需要备案）。
+   留空时只显示版权，不要渲染出「 | Jerry © 2026」这种多余的分隔符。 */
+const parts = computed(() => [footer.icp, footer.copyright].filter(Boolean))
 </script>
 
 <template>
-  <footer>{{ footer.icp }} | {{ footer.copyright }}</footer>
+  <footer>{{ parts.join(' | ') }}</footer>
 </template>
 
 <style scoped>
