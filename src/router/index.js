@@ -14,8 +14,8 @@ const routes = [
 ]
 
 export default createRouter({
-  /* 用 BASE_URL 而不是 '/'：GitHub Pages 上站点在 /jerry-blog/ 子路径下，
-     路由 base 必须跟着走，否则刷新 /jerry-blog/chat 会被当成根路径路由。 */
+  /* 用 BASE_URL 而不是 '/'：GitHub Pages 上站点在 /jerry-site/ 子路径下，
+     路由 base 必须跟着走，否则刷新 /jerry-site/chat 会被当成根路径路由。 */
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior: () => ({ top: 0 }),

@@ -77,7 +77,11 @@ export const socials = [
  * 文案长度：标题 ≤ 8 个汉字，desc ≤ 12 个汉字，超了会换行把 100px 的卡片撑高。
  */
 export const siteProjects = [
-  { title: '博客', desc: '记录折腾日常', img: asset('static/img/i1.png'), href: 'https://jiepijiang.github.io/jerry-blog/' },
+  /**
+   * 「博客」暂时指向本站自己 —— 博客目前就是本站的一部分。
+   * 等博客拆成独立仓库后，把 href 换成那个新地址（这里留个提示免得忘）。
+   */
+  { title: '博客', desc: '记录折腾日常', img: asset('static/img/i1.png'), href: 'https://jiepijiang.github.io/jerry-site/' },
   {
     title: '工具导航',
     desc: '网址导航与书签管理',

@@ -22,7 +22,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const PREF_KEY = 'jerry-blog:music-prefs'
+/* 跟着仓库改名一起换了命名空间。代价是旧键（jerry-blog:music-prefs）里存的
+   音量/播放模式不会被读取，用户下次进来会回到默认值 —— 一次性，无所谓。 */
+const PREF_KEY = 'jerry-site:music-prefs'
 
 const audio = ref(null)
 const current = ref(0)

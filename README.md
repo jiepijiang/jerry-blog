@@ -1,6 +1,6 @@
-# Jerry's Blog
+# Jerry Site
 
-基于 **Vue 3 + Vite** 的个人主页 / 博客门户。
+基于 **Vue 3 + Vite** 的个人主页门户。
 
 > **参考来源**
 >
@@ -8,10 +8,15 @@
 > （站名、简介、卡片标题等）外，**UI、动效、布局均按该站点 1:1 复刻**。
 > 复刻保真度已用 Playwright 做像素级比对验证，见下方「复刻保真度」。
 
-> **当前进度：第一版**
+> **当前进度：第二版**
 >
-> 视觉与交互已与原站对齐。文案与素材（头像、背景、项目图标、贡献图、技能树）
-> 仍是原站的资源，后续会逐步替换成自己的内容。
+> 视觉与交互已与原站对齐，**文案已全部换成自己的内容**（`src/data/site.js`）。
+> 素材（头像、背景、项目图标、贡献图、技能树）仍是原站的资源，后续逐步替换。
+
+> **仓库名沿革**
+>
+> 原名 `jerry-blog`，2026-09 改名为 **`jerry-site`** —— 本站定位为个人门户，
+> 博客部分后续会拆成独立仓库并新增独立入口。改名的连带改动见下方「在线预览」。
 
 ---
 
@@ -30,7 +35,7 @@ npm run preview  # 预览构建产物
 
 推送到 `main` 分支后会自动构建并发布到 GitHub Pages（见 `.github/workflows/deploy.yml`）：
 
-**https://jiepijiang.github.io/jerry-blog/**
+**https://jiepijiang.github.io/jerry-site/**
 
 几个和部署相关的点：
 
@@ -39,10 +44,20 @@ npm run preview  # 预览构建产物
 - 资源路径不能写死成 `/static/...`。Vite 只会重写 `index.html` 和 CSS 里的绝对路径，
   JS 字符串得用 `src/data/site.js` 里那个 `asset()` 助手包一层。
 - 构建时会额外产出一份 `404.html`（内容同 `index.html`）。GitHub Pages 没有 SPA fallback，
-  直接打开或刷新 `/jerry-blog/chat` 时靠它回退，前端路由再接管。
+  直接打开或刷新 `/jerry-site/chat` 时靠它回退，前端路由再接管。
   这种回退的 HTTP 状态码仍是 404，属于该方案的固有代价；站内点击链接是前端跳转，不受影响。
 - 首次部署后如果页面 404，去仓库 **Settings → Pages** 确认 Source 选的是
   **GitHub Actions**（而不是 "Deploy from a branch"）。
+
+> **改名的连带影响（`jerry-blog` → `jerry-site`）**
+>
+> 1. 旧地址 `https://jiepijiang.github.io/jerry-blog/` **会失效**。
+>    GitHub 只对仓库页做重定向，**Pages 站点地址不重定向**，必须用新地址。
+> 2. `vite.config.js` 的 `REPO_NAME`、`package.json` / `package-lock.json` 的 `name`、
+>    `index.html` 的标题与 meta、README 里的地址都已同步。
+> 3. 音乐播放器的偏好键由 `jerry-blog:music-prefs` 改为 `jerry-site:music-prefs`，
+>    旧键不再读取 —— 音量 / 播放模式会回到默认值，一次性。
+> 4. 姊妹项目 **jerry-tools** 里指向本站的链接已一并更新。
 
 ---
 
