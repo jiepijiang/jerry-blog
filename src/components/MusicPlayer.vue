@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { playlist as defaultPlaylist } from '@/data/site'
 
 /**
@@ -8,12 +8,21 @@ import { playlist as defaultPlaylist } from '@/data/site'
  *   头部 40,32；封面区 420 宽、封面 320×320；歌词区 flex-1 居中；
  *   底部控制条居中 800 宽、距底 24px、进度条 768×4。
  * 原站歌单来自远程接口，这里改为本地配置，在 data/site.js 里替换即可。
+ *
+ * 在原站还原的基础上补了三件事（原站这块本来就没做完）：
+ *   1. 歌词支持 LRC（`[mm:ss.xx]`），按播放进度跟唱滚动，点某行可跳转；
+ *      没写时间轴时退回静态展示（作词/编曲这类信息）。
+ *   2. 没有 src 的曲目不再「点了没反应」：明确显示未配置音源，
+ *      并给一个「选择本地音频」入口，选完立刻能放（支持拖拽）。
+ *   3. 音量 / 播放模式记到 localStorage；封面缺省时按标题生成渐变封面。
  */
 const props = defineProps({
   tracks: { type: Array, default: () => defaultPlaylist },
 })
 
 const emit = defineEmits(['close'])
+
+const PREF_KEY = 'jerry-blog:music-prefs'
 
 const audio = ref(null)
 const current = ref(0)
@@ -24,6 +33,9 @@ const volume = ref(0.8)
 const muted = ref(false)
 const mode = ref('list')
 const showList = ref(false)
+/** 播放失败的提示，显示在封面下方那行状态里 */
+const errorText = ref('')
+const fileInput = ref(null)
 
 const MODE_TEXT = { list: '顺序播放', single: '单曲循环', shuffle: '随机播放' }
 const MODE_ICON = {
@@ -34,13 +46,85 @@ const MODE_ICON = {
 
 const track = computed(() => props.tracks[current.value] || {})
 
-const lyricLines = computed(() => {
+/* ------------------------------------------------------------ 音源 */
+
+/**
+ * 用户临时选的本地音频，{ 曲目下标: blob URL }。
+ * 只活在当前这次会话里，不落盘 —— 这样仓库不用背任何有版权的音频。
+ */
+const localSrc = reactive({})
+
+const src = computed(() => localSrc[current.value] || track.value.src || '')
+const hasSrc = computed(() => !!src.value)
+
+function useLocalFile(file) {
+  if (!file) return
+  const looksAudio =
+    /^audio\//.test(file.type) || /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac)$/i.test(file.name)
+  if (!looksAudio) {
+    errorText.value = '只认音频文件'
+    return
+  }
+  const old = localSrc[current.value]
+  if (old) URL.revokeObjectURL(old)
+  localSrc[current.value] = URL.createObjectURL(file)
+  errorText.value = ''
+  nextTick(() => audio.value?.play().catch(() => (errorText.value = '这个格式当前浏览器放不了')))
+}
+
+function pickFile() {
+  fileInput.value?.click()
+}
+
+function onFileChange(e) {
+  useLocalFile(e.target.files?.[0])
+  e.target.value = ''
+}
+
+function onDrop(e) {
+  e.preventDefault()
+  useLocalFile(e.dataTransfer?.files?.[0])
+}
+
+function onDragOver(e) {
+  e.preventDefault()
+}
+
+/* ------------------------------------------------------------ 歌词 */
+
+/**
+ * 解析 LRC：`[mm:ss.xx] 一行` → [{ time, text }]。
+ * 同一行可以挂多个时间戳（副歌复用），所以用 matchAll 全部收下。
+ */
+function parseLrc(raw) {
+  const re = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g
+  const out = []
+  for (const line of String(raw).split(/\r?\n/)) {
+    const stamps = [...line.matchAll(re)]
+    if (!stamps.length) continue
+    const text = line.replace(re, '').trim()
+    for (const m of stamps) {
+      const frac = m[3] ? Number(`0.${m[3]}`) : 0
+      out.push({ time: Number(m[1]) * 60 + Number(m[2]) + frac, text })
+    }
+  }
+  return out.sort((a, b) => a.time - b.time)
+}
+
+/** 统一成 [{ time|null, text }]：有时间轴就按时间，没有就是静态列表。 */
+const lyrics = computed(() => {
   const l = track.value.lyric
+  if (!l) return []
+  const raw = Array.isArray(l) ? l.join('\n') : typeof l === 'string' ? l : null
+  if (raw && /\[\d{1,2}:\d{1,2}/.test(raw)) return parseLrc(raw)
+
   const title = track.value.title ? `《${track.value.title}》` : ''
-  const lines = !l ? [] : Array.isArray(l) ? l : Object.entries(l).map(([k, v]) => `${k}：${v}`)
-  // 原站歌词列表首行就是歌名
-  return title ? [title, ...lines] : lines
+  const lines = Array.isArray(l) ? l : Object.entries(l).map(([k, v]) => `${k}：${v}`)
+  return (title ? [title, ...lines] : lines).map((text) => ({ time: null, text }))
 })
+
+/** 这首有没有时间轴。没有的话退回「按进度均分」的旧行为。 */
+const timed = computed(() => lyrics.value.some((l) => l.time != null))
 
 const activeLyric = ref(0)
 const lyricsEl = ref(null)
@@ -56,7 +140,42 @@ function centerActiveLine() {
   lyricOffset.value = list.offsetHeight / 2 - lineCenter
 }
 
-watch([activeLyric, lyricLines], () => nextTick(centerActiveLine), { immediate: true })
+/**
+ * 歌词行的字号 / 字重是 0.3s 过渡，切换那一瞬间量到的 offsetTop 还是旧的，
+ * 按那时的布局去居中会差出几十像素（而且行号不变就不会再量一次，误差会一直留着）。
+ * 所以除了 nextTick 先量一次，再挂一个 transitionend：等过渡跑完、布局定下来再量一次。
+ * 值没变时 Vue 不会改样式，也就不会触发新的 transition，不会打转。
+ */
+watch([activeLyric, lyrics], () => nextTick(centerActiveLine), { immediate: true })
+
+/** 把歌词指针挪到当前时间对应的那一行。 */
+function syncLyric() {
+  const list = lyrics.value
+  if (!list.length) return
+  if (timed.value) {
+    let i = 0
+    for (let k = 0; k < list.length; k++) {
+      if (list[k].time <= progress.value + 0.05) i = k
+      else break
+    }
+    activeLyric.value = i
+    return
+  }
+  const total = duration.value || track.value.duration || 0
+  if (total) {
+    activeLyric.value = Math.min(list.length - 1, Math.floor((progress.value / total) * list.length))
+  }
+}
+
+/** 点歌词行跳到那句（只有带时间轴的才有意义）。 */
+function seekToLyric(i) {
+  const el = audio.value
+  const line = lyrics.value[i]
+  if (!el || !line || line.time == null) return
+  el.currentTime = line.time
+  progress.value = el.currentTime
+  activeLyric.value = i
+}
 
 /* 距离当前行越远，字号越小、颜色越淡（与原站一致） */
 function lineStyle(i) {
@@ -66,6 +185,21 @@ function lineStyle(i) {
   if (d === 2) return { fontSize: '18px', fontWeight: 400, color: 'rgba(255,255,255,.55)' }
   return { fontSize: '16px', fontWeight: 400, color: 'rgba(255,255,255,.35)' }
 }
+
+/* ------------------------------------------------------------ 封面兜底 */
+
+/** 没有封面图时，按标题算一个色相，生成一张渐变换色封面。 */
+const coverFallback = computed(() => {
+  const s = String(track.value.title || '♪')
+  let h = 0
+  for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 360
+  return {
+    backgroundImage: `linear-gradient(140deg, hsl(${h} 46% 30%), hsl(${(h + 48) % 360} 58% 52%))`,
+    letter: s.slice(0, 1),
+  }
+})
+
+/* ------------------------------------------------------------ 播放控制 */
 
 function fmt(sec) {
   if (!Number.isFinite(sec)) return '00:00'
@@ -80,17 +214,23 @@ const ratio = computed(() => (duration.value ? (progress.value / duration.value)
 
 function toggle() {
   const el = audio.value
-  if (!el) return
-  if (el.paused) el.play().catch(() => {})
+  if (!el || !hasSrc.value) return
+  if (el.paused) el.play().catch(() => (errorText.value = '播放失败，换个音频试试'))
   else el.pause()
 }
 
 function step(delta) {
+  // 切歌时 audio 的 src 会变，元素会先 pause，事件回调又是异步的，
+  // 所以这里先把「切之前是不是在放」记下来，别直接读 playing。
+  const wasPlaying = playing.value
   if (mode.value === 'shuffle') current.value = Math.floor(Math.random() * props.tracks.length)
   else current.value = (current.value + delta + props.tracks.length) % props.tracks.length
   activeLyric.value = 0
-  requestAnimationFrame(() => {
-    if (playing.value) audio.value?.play().catch(() => {})
+  progress.value = 0
+  duration.value = 0
+  errorText.value = ''
+  nextTick(() => {
+    if (wasPlaying) audio.value?.play().catch(() => {})
   })
 }
 
@@ -98,13 +238,7 @@ function onTimeUpdate() {
   const el = audio.value
   if (!el) return
   progress.value = el.currentTime
-  const total = el.duration || track.value.duration || 0
-  if (lyricLines.value.length && total) {
-    activeLyric.value = Math.min(
-      lyricLines.value.length - 1,
-      Math.floor((el.currentTime / total) * lyricLines.value.length),
-    )
-  }
+  syncLyric()
 }
 
 function onLoaded() {
@@ -112,6 +246,12 @@ function onLoaded() {
   if (!el) return
   duration.value = el.duration || track.value.duration || 0
   el.volume = volume.value
+  el.muted = muted.value
+  errorText.value = ''
+}
+
+function onError() {
+  if (hasSrc.value) errorText.value = '音频加载失败'
 }
 
 function onEnded() {
@@ -128,13 +268,17 @@ function seek(e) {
   const r = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
   el.currentTime = r * duration.value
   progress.value = el.currentTime
+  syncLyric()
 }
 
 function onVolume(e) {
   const v = Number(e.target.value)
   volume.value = v
   muted.value = v === 0
-  if (audio.value) audio.value.volume = v
+  if (audio.value) {
+    audio.value.volume = v
+    audio.value.muted = muted.value
+  }
 }
 
 function toggleMute() {
@@ -151,7 +295,10 @@ function pick(i) {
   current.value = i
   showList.value = false
   activeLyric.value = 0
-  requestAnimationFrame(() => audio.value?.play().catch(() => {}))
+  progress.value = 0
+  duration.value = 0
+  errorText.value = ''
+  nextTick(() => audio.value?.play().catch(() => {}))
 }
 
 function onKey(e) {
@@ -165,15 +312,44 @@ function onKey(e) {
   }
 }
 
+/* ------------------------------------------------------------ 偏好持久化 */
+
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREF_KEY) || '{}')
+    if (typeof p.volume === 'number') volume.value = Math.min(1, Math.max(0, p.volume))
+    if (typeof p.muted === 'boolean') muted.value = p.muted
+    if (['list', 'single', 'shuffle'].includes(p.mode)) mode.value = p.mode
+  } catch {
+    /* 隐私模式读不到就用默认值 */
+  }
+}
+
+watch([volume, muted, mode], () => {
+  try {
+    localStorage.setItem(
+      PREF_KEY,
+      JSON.stringify({ volume: volume.value, muted: muted.value, mode: mode.value }),
+    )
+  } catch {
+    /* ignore */
+  }
+})
+
 onMounted(() => {
+  loadPrefs()
   window.addEventListener('keydown', onKey)
   nextTick(centerActiveLine)
 })
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  Object.values(localSrc).forEach((u) => URL.revokeObjectURL(u))
+})
 </script>
 
 <template>
-  <div class="player">
+  <div class="player" @dragover="onDragOver" @drop="onDrop">
     <div class="page">
       <header class="head">
         <div class="brand" @click="emit('close')">BackHome</div>
@@ -184,28 +360,44 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <section class="cover-col">
           <div class="cover">
             <img v-if="track.cover" :src="track.cover" :alt="track.title" />
-            <div v-else class="cover-fallback" />
+            <div v-else class="cover-fallback" :style="{ backgroundImage: coverFallback.backgroundImage }">
+              <span>{{ coverFallback.letter }}</span>
+            </div>
           </div>
           <div class="cover-meta">
             <h2 class="now-title">{{ track.title || '等待播放' }}</h2>
             <p class="now-artist">{{ track.artist || '未知艺术家' }}</p>
-            <div class="now-status">{{ playing ? '正在播放' : '已暂停' }}</div>
+            <div class="now-status" :class="{ warn: !!errorText || !hasSrc }">
+              <template v-if="errorText">{{ errorText }}</template>
+              <template v-else-if="!hasSrc">未配置音源</template>
+              <template v-else>{{ playing ? '正在播放' : '已暂停' }}</template>
+            </div>
+            <button v-if="!hasSrc" class="pick-btn" @click="pickFile">
+              选择本地音频播放
+            </button>
           </div>
         </section>
 
         <section class="lyric-col">
           <div class="lyric-viewport">
-            <div ref="lyricsEl" class="lyrics" :style="{ transform: `translateY(${lyricOffset}px)` }">
+            <div
+              ref="lyricsEl"
+              class="lyrics"
+              :style="{ transform: `translateY(${lyricOffset}px)` }"
+              @transitionend="centerActiveLine"
+            >
               <p
-                v-for="(line, i) in lyricLines"
+                v-for="(line, i) in lyrics"
                 :key="i"
                 :ref="(el) => (lineEls[i] = el)"
                 class="lyric-line"
+                :class="{ seekable: timed }"
                 :style="lineStyle(i)"
+                @click="seekToLyric(i)"
               >
-                {{ line }}
+                {{ line.text }}
               </p>
-              <p v-if="!lyricLines.length" class="lyric-line" :style="lineStyle(0)">暂无歌词</p>
+              <p v-if="!lyrics.length" class="lyric-line" :style="lineStyle(0)">暂无歌词</p>
             </div>
           </div>
         </section>
@@ -231,7 +423,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor" />
             </svg>
           </button>
-          <button class="btn play" aria-label="播放/暂停" @click="toggle">
+          <button class="btn play" :aria-label="hasSrc ? '播放/暂停' : '未配置音源'" @click="toggle">
             <svg v-if="!playing" viewBox="0 0 24 24" width="24" height="24">
               <path d="M8 5v14l11-7z" fill="currentColor" />
             </svg>
@@ -298,20 +490,30 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             <span class="name">{{ t.title }}</span>
             <span class="artist">{{ t.artist }}</span>
           </span>
+          <span v-if="!t.src && !localSrc[i]" class="no-src">未配置音源</span>
           <span class="dur">{{ fmt(t.duration) }}</span>
         </li>
       </ul>
     </aside>
 
+    <input
+      ref="fileInput"
+      class="file-input"
+      type="file"
+      accept="audio/*"
+      @change="onFileChange"
+    />
+
     <audio
       ref="audio"
-      :src="track.src"
+      :src="src || null"
       preload="metadata"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onLoaded"
       @play="playing = true"
       @pause="playing = false"
       @ended="onEnded"
+      @error="onError"
     />
   </div>
 </template>
@@ -402,10 +604,21 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   width: 100%;
 }
 
+/* 没有封面图时的兜底：按标题算色相的渐变 + 首字，比一块死渐变像样 */
 .cover-fallback {
-  background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+  align-items: center;
+  display: flex;
   height: 100%;
+  justify-content: center;
   width: 100%;
+}
+
+.cover-fallback span {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 120px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
 }
 
 .cover-meta {
@@ -429,6 +642,32 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   font-size: 12px;
   margin-top: 24px;
   min-height: 1.25rem;
+}
+
+.now-status.warn {
+  color: #fbbf24;
+}
+
+/* 「未配置音源」时给的出口：选一个本地文件就能直接放，不用重新部署 */
+.pick-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-size: 12.5px;
+  margin-top: 12px;
+  padding: 7px 16px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.pick-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.file-input {
+  display: none;
 }
 
 /* ===================== 歌词 ===================== */
@@ -462,6 +701,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     color 0.3s ease,
     font-weight 0.3s ease;
   will-change: transform;
+}
+
+/* 带时间轴的歌词可以点，点了跳到那一句 */
+.lyric-line.seekable {
+  cursor: pointer;
+}
+
+.lyric-line.seekable:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* 说明：原站歌词区上还挂了一个 bg-gradient-to-b 的渐隐遮罩，但 Tailwind v4
@@ -723,6 +971,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 .list-panel .dur {
   color: #94a3b8;
   font-size: 12px;
+}
+
+/* 列表里标出这首还没接音源，免得点进去一头雾水 */
+.list-panel .no-src {
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 999px;
+  color: #fbbf24;
+  font-size: 10.5px;
+  padding: 1px 8px;
 }
 
 /* ===================== 响应式 ===================== */

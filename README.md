@@ -66,6 +66,7 @@ npm run preview  # 预览构建产物
 ├── public/static/
 │   ├── fonts/                  # Ubuntu（正文）、Pacifico（渐变标题）
 │   ├── img/                    # 头像、背景、项目卡片图标
+│   ├── music/                  # 歌单音频与封面（《夜航》为原创纯音乐）
 │   └── svg/                    # 贪吃蛇贡献图、技能树
 └── src/
     ├── main.js
@@ -181,10 +182,22 @@ npm run preview  # 预览构建产物
    `bg-linear-to-b`，实际渲染为 `none`。本项目同样不加遮罩。
 8. **音乐播放器**：原站是独立子应用，歌单来自远程接口。
    本项目用 Vue 组件重写了视觉与交互（尺寸/字号/颜色按原站实测值还原），
-   歌单改为本地配置。
+   歌单改为本地配置。原站这块本身没做完，本项目补了三件事：
+   - **歌词支持 LRC**：`[mm:ss.xx] 一行` 的写法会按播放进度跟唱滚动，点某行可跳转；
+     不写时间轴时退回静态展示（作词/编曲这类信息），两种写法在 `site.js` 里都能填。
+   - **没有音源的曲目不再「点了没反应」**：明确显示「未配置音源」，
+     并给一个「选择本地音频」入口（也支持把音频拖进播放器），选完立刻能放。
+   - 音量 / 播放模式记到 localStorage；封面留空时按标题生成渐变封面，不再是死板占位块。
+   顺带修了歌词居中的偏差：字号是 0.3s 过渡，切换瞬间量到的 `offsetTop` 还是旧的，
+   按那时的布局居中会差几十像素，现在等 `transitionend` 落定后再量一次。
 9. **留言板接口**：原站提交到 `https://bit.inthesea.top/api/submit-comment`（站长自己的服务）。
    本项目 `guestbook.endpoint` 默认留空，走本地成功流程，便于直接预览。
 10. **Service Worker**：原站注册了 `sw.js`，本项目未引入（Vite 构建下意义不大）。
+11. **Pacifico 字体换成完整子集**：仓库里原先那份 `Pacifico-Regular.ttf` 只有 13 KB，
+    是照着原站用到的字符裁的子集，**缺 J 等一大批字形**（`ABCDEFGIJKLMNPQRTUVXYZ…`）。
+    原站标题里恰好没有这些字母所以看不出问题，但本项目标题是「Jerry」，
+    J 会回退成无衬线体，和后面的 `erry` 明显不是一个字体。
+    现已换成从 Google Fonts 取的完整版按可打印 ASCII 重新裁的子集（42 KB，SIL OFL 1.1）。
 
 ---
 
@@ -193,6 +206,11 @@ npm run preview  # 预览构建产物
 > 仓库里现在带的素材都来自原站，正式使用前请按下面几条替换掉。
 
 - **文案**：改 `src/data/site.js`（站名、简介、标签、时间轴、卡片、歌单都在这里）
+- **音乐**：`public/static/music/` 里是原创纯音乐《夜航》（`night-sail.mp3` + 封面），
+  自己合成、没有版权问题，直接替换成你自己的歌即可。
+  换歌三步：把音频丢进 `public/static/music/` → 在 `site.js` 的 `playlist` 里填
+  `src` / `cover` / `lyric`（LRC 格式）→ 重新部署。
+  不想部署也能听：播放器里「选择本地音频播放」，或直接把音频文件拖进去。
 - **头像 / 背景**：替换 `public/static/img/logo.jpg`、`background.jpg`
 - **贪吃蛇**：原站用的是 [Platane/snk](https://github.com/Platane/snk) 生成的
   GitHub 贡献图动画，可用你的用户名重新生成后覆盖 `public/static/svg/snake-*.svg`
